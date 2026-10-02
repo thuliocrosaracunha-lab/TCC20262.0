@@ -1,0 +1,8 @@
+module.exports = {
+  ...require('./usuario'),
+  ...require('./token_recuperacao_senha'),
+  ...require('./meta'),
+  ...require('./categoria'),
+  ...require('./movimentacao'),
+  ...require('./relations'),
+};
