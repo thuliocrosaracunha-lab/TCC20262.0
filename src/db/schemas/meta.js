@@ -1,7 +1,7 @@
-const { pgTable, serial, numeric, date, integer } = require('drizzle-orm/pg-core');
-const { usuario } = require('./usuario');
+import { pgTable, serial, numeric, date, integer } from 'drizzle-orm/pg-core';
+import { usuario } from './usuario.js';
 
-const meta = pgTable('meta', {
+export const meta = pgTable('meta', {
   id: serial('id').primaryKey(),
   usuarioId: integer('usuario_id')
     .notNull()
@@ -10,5 +10,3 @@ const meta = pgTable('meta', {
   dataInicio: date('data_inicio').notNull(),
   dataFim: date('data_fim').notNull(),
 });
-
-module.exports = { meta };

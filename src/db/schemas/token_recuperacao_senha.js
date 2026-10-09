@@ -1,8 +1,7 @@
+import { pgTable, serial, varchar, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
+import { usuario } from './usuario.js';
 
-const { pgTable, serial, varchar, timestamp, boolean, integer } = require('drizzle-orm/pg-core');
-const { usuario } = require('./usuario');
-
-const tokenRecuperacaoSenha = pgTable('token_recuperacao_senha', {
+export const tokenRecuperacaoSenha = pgTable('token_recuperacao_senha', {
   id: serial('id').primaryKey(),
   usuarioId: integer('usuario_id')
     .notNull()
@@ -11,5 +10,3 @@ const tokenRecuperacaoSenha = pgTable('token_recuperacao_senha', {
   expiraEm: timestamp('expira_em').notNull(),
   usado: boolean('usado').notNull().default(false),
 });
-
-module.exports = { tokenRecuperacaoSenha };

@@ -1,9 +1,12 @@
+import { pgTable, serial, varchar, numeric, date, integer } from 'drizzle-orm/pg-core';
+import { usuario } from './usuario.js';
+import { categoria } from './categoria.js';
 
-const { pgTable, serial, varchar, numeric, date, integer } = require('drizzle-orm/pg-core');
-const { categoria } = require('./categoria');
-
-const movimentacao = pgTable('movimentacao', {
+export const movimentacao = pgTable('movimentacao', {
   id: serial('id').primaryKey(),
+  usuarioId: integer('usuario_id')
+    .notNull()
+    .references(() => usuario.id, { onDelete: 'cascade' }),
   categoriaId: integer('categoria_id')
     .notNull()
     .references(() => categoria.id),
@@ -12,5 +15,3 @@ const movimentacao = pgTable('movimentacao', {
   data: date('data').notNull(),
   descricao: varchar('descricao', { length: 255 }),
 });
-
-module.exports = { movimentacao };
