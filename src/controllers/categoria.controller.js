@@ -2,13 +2,6 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { categoria } from '../db/schemas/categoria.js';
 
-const TIPOS = ['entrada', 'saida'];
-
-function lerId(param) {
-  const id = Number(param);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
-
 // GET /categorias
 export async function listar(req, res, next) {
   try {
@@ -22,8 +15,7 @@ export async function listar(req, res, next) {
 // GET /categorias/:id
 export async function buscar(req, res, next) {
   try {
-    const id = lerId(req.params.id);
-    if (!id) return res.status(400).json({ erro: 'ID inválido' });
+    const { id } = req.validado.params;
 
     const [encontrada] = await db.select().from(categoria).where(eq(categoria.id, id));
     if (!encontrada) return res.status(404).json({ erro: 'Categoria não encontrada' });
@@ -37,18 +29,7 @@ export async function buscar(req, res, next) {
 // POST /categorias
 export async function criar(req, res, next) {
   try {
-    const { nome, tipo } = req.body ?? {};
-
-    if (!nome?.trim() || !TIPOS.includes(tipo)) {
-      return res
-        .status(400)
-        .json({ erro: "Informe 'nome' e 'tipo' ('entrada' ou 'saida')" });
-    }
-
-    const [nova] = await db
-      .insert(categoria)
-      .values({ nome: nome.trim(), tipo })
-      .returning();
+    const [nova] = await db.insert(categoria).values(req.validado.body).returning();
 
     res.status(201).location(`/categorias/${nova.id}`).json(nova);
   } catch (err) {
@@ -59,29 +40,11 @@ export async function criar(req, res, next) {
 // PATCH /categorias/:id
 export async function atualizar(req, res, next) {
   try {
-    const id = lerId(req.params.id);
-    if (!id) return res.status(400).json({ erro: 'ID inválido' });
-
-    const { nome, tipo } = req.body ?? {};
-    const dados = {};
-
-    if (nome !== undefined) {
-      if (!nome.trim()) return res.status(400).json({ erro: 'Nome inválido' });
-      dados.nome = nome.trim();
-    }
-    if (tipo !== undefined) {
-      if (!TIPOS.includes(tipo)) {
-        return res.status(400).json({ erro: "Tipo deve ser 'entrada' ou 'saida'" });
-      }
-      dados.tipo = tipo;
-    }
-    if (Object.keys(dados).length === 0) {
-      return res.status(400).json({ erro: 'Nenhum dado para atualizar' });
-    }
+    const { id } = req.validado.params;
 
     const [atualizada] = await db
       .update(categoria)
-      .set(dados)
+      .set(req.validado.body)
       .where(eq(categoria.id, id))
       .returning();
 
@@ -96,8 +59,7 @@ export async function atualizar(req, res, next) {
 // DELETE /categorias/:id
 export async function remover(req, res, next) {
   try {
-    const id = lerId(req.params.id);
-    if (!id) return res.status(400).json({ erro: 'ID inválido' });
+    const { id } = req.validado.params;
 
     const [removida] = await db
       .delete(categoria)

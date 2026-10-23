@@ -17,15 +17,10 @@ export function autenticar(req, res, next) {
 }
 
 // RNF004 - usuário só acessa os próprios dados
+// usar depois de validar({ params: idParams })
 export function somenteProprioUsuario(req, res, next) {
-  const id = Number(req.params.id);
-
-  if (!Number.isInteger(id) || id <= 0) {
-    return res.status(400).json({ erro: 'ID inválido' });
-  }
-  if (id !== req.usuarioId) {
+  if (req.validado?.params?.id !== req.usuarioId) {
     return res.status(403).json({ erro: 'Acesso negado' });
   }
-
   next();
 }

@@ -3,6 +3,8 @@ import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
 import usuarioRoutes from './routes/usuario.routes.js';
 import categoriaRoutes from './routes/categoria.routes.js';
+import movimentacaoRoutes from './routes/movimentacao.routes.js';
+import metaRoutes from './routes/meta.routes.js';
 
 const app = express();
 
@@ -16,6 +18,8 @@ app.get('/health', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/usuarios', usuarioRoutes);
 app.use('/categorias', categoriaRoutes);
+app.use('/movimentacoes', movimentacaoRoutes);
+app.use('/metas', metaRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ erro: 'Rota não encontrada' });

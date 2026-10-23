@@ -3,9 +3,6 @@ import { db } from '../db/index.js';
 import { usuario } from '../db/schemas/usuario.js';
 import { gerarHash } from '../auth/auth.service.js';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SENHA_MINIMA = 6;
-
 // colunas retornadas pela API (nunca a senha)
 const camposPublicos = {
   id: usuario.id,
@@ -25,32 +22,15 @@ async function emailEmUso(email, ignorarId) {
 // POST /usuarios — RF001
 export async function criar(req, res, next) {
   try {
-    const { nome, email, senha } = req.body ?? {};
-    const nomeLimpo = nome?.trim();
-    const emailNormalizado = email?.trim().toLowerCase();
+    const { nome, email, senha } = req.validado.body;
 
-    if (!nomeLimpo || !emailNormalizado || !senha) {
-      return res.status(400).json({ erro: 'Informe nome, e-mail e senha' });
-    }
-    if (!EMAIL_REGEX.test(emailNormalizado)) {
-      return res.status(400).json({ erro: 'E-mail inválido' });
-    }
-    if (senha.length < SENHA_MINIMA) {
-      return res
-        .status(400)
-        .json({ erro: `A senha deve ter pelo menos ${SENHA_MINIMA} caracteres` });
-    }
-    if (await emailEmUso(emailNormalizado)) {
+    if (await emailEmUso(email)) {
       return res.status(409).json({ erro: 'E-mail já cadastrado' });
     }
 
     const [novo] = await db
       .insert(usuario)
-      .values({
-        nome: nomeLimpo,
-        email: emailNormalizado,
-        senha: await gerarHash(senha),
-      })
+      .values({ nome, email, senha: await gerarHash(senha) })
       .returning(camposPublicos);
 
     res.status(201).location(`/usuarios/${novo.id}`).json(novo);
@@ -67,9 +47,7 @@ export async function buscar(req, res, next) {
       .from(usuario)
       .where(eq(usuario.id, req.usuarioId));
 
-    if (!encontrado) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
-    }
+    if (!encontrado) return res.status(404).json({ erro: 'Usuário não encontrado' });
 
     res.json(encontrado);
   } catch (err) {
@@ -80,36 +58,14 @@ export async function buscar(req, res, next) {
 // PATCH /usuarios/:id — RF005
 export async function atualizar(req, res, next) {
   try {
-    const { nome, email, senha } = req.body ?? {};
-    const dados = {};
+    const dados = { ...req.validado.body };
 
-    if (nome !== undefined) {
-      if (!nome.trim()) return res.status(400).json({ erro: 'Nome inválido' });
-      dados.nome = nome.trim();
+    if (dados.email && (await emailEmUso(dados.email, req.usuarioId))) {
+      return res.status(409).json({ erro: 'E-mail já cadastrado' });
     }
 
-    if (email !== undefined) {
-      const emailNormalizado = email.trim().toLowerCase();
-      if (!EMAIL_REGEX.test(emailNormalizado)) {
-        return res.status(400).json({ erro: 'E-mail inválido' });
-      }
-      if (await emailEmUso(emailNormalizado, req.usuarioId)) {
-        return res.status(409).json({ erro: 'E-mail já cadastrado' });
-      }
-      dados.email = emailNormalizado;
-    }
-
-    if (senha !== undefined) {
-      if (senha.length < SENHA_MINIMA) {
-        return res
-          .status(400)
-          .json({ erro: `A senha deve ter pelo menos ${SENHA_MINIMA} caracteres` });
-      }
-      dados.senha = await gerarHash(senha);
-    }
-
-    if (Object.keys(dados).length === 0) {
-      return res.status(400).json({ erro: 'Nenhum dado para atualizar' });
+    if (dados.senha) {
+      dados.senha = await gerarHash(dados.senha);
     }
 
     const [atualizado] = await db
@@ -118,9 +74,7 @@ export async function atualizar(req, res, next) {
       .where(eq(usuario.id, req.usuarioId))
       .returning(camposPublicos);
 
-    if (!atualizado) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
-    }
+    if (!atualizado) return res.status(404).json({ erro: 'Usuário não encontrado' });
 
     res.json(atualizado);
   } catch (err) {
@@ -136,9 +90,7 @@ export async function remover(req, res, next) {
       .where(eq(usuario.id, req.usuarioId))
       .returning({ id: usuario.id });
 
-    if (!removido) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
-    }
+    if (!removido) return res.status(404).json({ erro: 'Usuário não encontrado' });
 
     res.status(204).end();
   } catch (err) {

@@ -10,7 +10,6 @@ export const movimentacao = pgTable('movimentacao', {
   categoriaId: integer('categoria_id')
     .notNull()
     .references(() => categoria.id),
-  tipo: varchar('tipo', { length: 10 }).notNull(),
   valor: numeric('valor', { precision: 12, scale: 2 }).notNull(),
   data: date('data').notNull(),
   descricao: varchar('descricao', { length: 255 }),

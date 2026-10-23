@@ -1,0 +1,1 @@
+ALTER TABLE "meta" ADD COLUMN "nome" varchar(80) NOT NULL;

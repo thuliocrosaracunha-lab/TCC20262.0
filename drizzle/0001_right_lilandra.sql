@@ -1,0 +1,1 @@
+ALTER TABLE "movimentacao" DROP COLUMN "tipo";
