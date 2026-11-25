@@ -4,12 +4,17 @@ import { meta } from '../db/schemas/meta.js';
 import { arredondar, hojeISO } from '../utils/formatacao.js';
 
 // RF017 - quanto o usuário juntou no período da meta (entradas - saídas)
+// As colunas da meta são escritas com o nome da tabela de propósito. Numa consulta
+// de uma tabela só, o Drizzle gera "usuario_id" sem prefixo, e dentro desta
+// subconsulta o Postgres entenderia como m.usuario_id. A condição viraria
+// m.usuario_id = m.usuario_id (sempre verdadeira) e somaria as movimentações de
+// todos os usuários.
 const acumulado = sql`(
   select coalesce(sum(case when c.tipo = 'entrada' then m.valor else -m.valor end), 0)
   from movimentacao m
   inner join categoria c on c.id = m.categoria_id
-  where m.usuario_id = ${meta.usuarioId}
-    and m.data between ${meta.dataInicio} and ${meta.dataFim}
+  where m.usuario_id = meta.usuario_id
+    and m.data between meta.data_inicio and meta.data_fim
 )`.mapWith(Number);
 
 const campos = {
